@@ -1,4 +1,6 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 declare global {
   interface Window {
@@ -1489,6 +1491,12 @@ function normalizeCategory(category: Partial<Category>): Category {
 
 export default function App() {
   const [activeView, setActiveView] = useState<"budget" | "insights" | "goal_planning">("budget");
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("budget-dark-mode");
     if (!saved) return false;
@@ -4133,6 +4141,37 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      return;
+    }
+
+    let alive = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!alive) return;
+        setAuthUser(data.session?.user ?? null);
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setAuthLoading(false);
+      });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      alive = false;
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeView !== "insights") return;
     let cancelled = false;
 
@@ -4202,6 +4241,120 @@ export default function App() {
     };
   }, [activeView]);
 
+  async function handleSignIn() {
+    if (!isSupabaseConfigured) return;
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthMessage("Enter both email and password.");
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthMessage(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail.trim(),
+      password: authPassword,
+    });
+    if (error) {
+      setAuthMessage(error.message);
+      setAuthBusy(false);
+      return;
+    }
+    setAuthPassword("");
+    setAuthBusy(false);
+  }
+
+  async function handleSignUp() {
+    if (!isSupabaseConfigured) return;
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthMessage("Enter both email and password.");
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthMessage(null);
+    const { error } = await supabase.auth.signUp({
+      email: authEmail.trim(),
+      password: authPassword,
+    });
+    if (error) {
+      setAuthMessage(error.message);
+      setAuthBusy(false);
+      return;
+    }
+    setAuthMessage("Account created. Check your email if confirmation is enabled, then sign in.");
+    setAuthPassword("");
+    setAuthBusy(false);
+  }
+
+  async function handleSignOut() {
+    if (!isSupabaseConfigured) return;
+    await supabase.auth.signOut();
+    setAuthMessage("Signed out.");
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen p-4 md:p-6">
+        <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-lg font-semibold text-slate-900">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen p-4 md:p-6">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-amber-200 bg-amber-50 p-8 shadow-sm">
+          <p className="text-xl font-bold text-amber-900">Supabase auth is not configured yet</p>
+          <p className="mt-2 text-sm text-amber-800">
+            Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in local env and Vercel env vars.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen p-4 md:p-6">
+        <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <img src="/insight-i-mark.png" alt="Insight Financial icon" className="h-10 w-10 rounded-xl object-cover" />
+            <p className="text-2xl font-bold text-slate-900">Sign in to Insight Financial</p>
+          </div>
+          <div className="space-y-3">
+            <input
+              className="app-input w-full"
+              type="email"
+              placeholder="Email"
+              value={authEmail}
+              onChange={(event) => setAuthEmail(event.target.value)}
+            />
+            <input
+              className="app-input w-full"
+              type="password"
+              placeholder="Password"
+              value={authPassword}
+              onChange={(event) => setAuthPassword(event.target.value)}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button className="app-btn-primary" onClick={() => void handleSignIn()} disabled={authBusy}>
+                {authBusy ? "Working..." : "Sign In"}
+              </button>
+              <button className="app-btn-neutral" onClick={() => void handleSignUp()} disabled={authBusy}>
+                Create Account
+              </button>
+            </div>
+            {authMessage ? (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">{authMessage}</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -4251,6 +4404,9 @@ export default function App() {
                 onClick={() => setIsDarkMode((current) => !current)}
               >
                 {isDarkMode ? "Light Mode" : "Dark Mode"}
+              </button>
+              <button className="app-btn-neutral px-3 py-2 text-xs md:text-sm" onClick={() => void handleSignOut()}>
+                Sign Out
               </button>
             </div>
           </div>
