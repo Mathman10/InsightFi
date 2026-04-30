@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 8% 6%, rgba(56, 189, 248, 0.22), transparent 30%),
+      radial-gradient(circle at 88% 12%, rgba(99, 102, 241, 0.14), transparent 30%),
+      radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12), transparent 34%),
+      linear-gradient(180deg, #f7fbff 0%, #f3f7ff 45%, #eef4ff 100%);
+    color: #0f172a;
+  }
+
+  body.dark-mode {
+    background:
+      radial-gradient(circle at 10% 8%, rgba(14, 116, 144, 0.22), transparent 30%),
+      radial-gradient(circle at 88% 10%, rgba(30, 64, 175, 0.18), transparent 32%),
+      radial-gradient(circle at 85% 85%, rgba(22, 101, 52, 0.12), transparent 36%),
+      linear-gradient(180deg, #07111f 0%, #0b1426 45%, #0e1729 100%);
+    color: #e2e8f0;
+  }
+
+  ::selection {
+    background: rgba(14, 165, 233, 0.24);
+    color: #0f172a;
+  }
+
+  body.dark-mode ::selection {
+    background: rgba(56, 189, 248, 0.34);
+    color: #e2e8f0;
+  }
+}
+
+@layer components {
+  .app-panel {
+    @apply rounded-3xl border border-sky-100/80 bg-white/92 shadow-[0_6px_20px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(2,132,199,0.14)];
+  }
+
+  .app-panel-strong {
+    @apply rounded-3xl border border-sky-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(2,132,199,0.16)];
+  }
+
+  .app-section-title {
+    @apply text-xl font-bold text-slate-900 tracking-tight;
+  }
+
+  .app-input {
+    @apply rounded-2xl border border-slate-200/90 bg-white px-3 py-2 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70;
+  }
+
+  .app-chip {
+    @apply rounded-full border border-sky-100 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.06)];
+  }
+
+  .app-tab {
+    @apply rounded-2xl px-4 py-2 text-sm font-semibold transition;
+  }
+
+  .app-tab-active {
+    @apply bg-gradient-to-r from-sky-800 via-cyan-700 to-blue-800 text-white shadow-[0_8px_20px_rgba(2,132,199,0.28)];
+  }
+
+  .app-tab-inactive {
+    @apply bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-slate-800;
+  }
+
+  .app-btn-primary {
+    @apply rounded-2xl bg-gradient-to-r from-sky-800 via-cyan-700 to-blue-800 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,132,199,0.24)] transition hover:from-sky-900 hover:via-cyan-800 hover:to-blue-900;
+  }
+
+  .app-btn-neutral {
+    @apply rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50;
+  }
+
+  .app-btn-danger {
+    @apply rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100;
+  }
+
+  .app-sort-card {
+    @apply transition-all duration-200;
+  }
+
+  .app-sort-card-idle {
+    @apply border-transparent;
+  }
+
+  .app-sort-card-dragging {
+    @apply scale-[0.99] opacity-65 shadow-inner;
+  }
+
+  .app-sort-card-target {
+    @apply ring-2 ring-offset-2;
+  }
+
+  .app-sort-handle {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-400 transition group-hover:border-sky-200 group-hover:bg-sky-50 group-hover:text-sky-600;
+  }
+
+  .app-reorder-hint {
+    @apply mt-2 inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500 transition md:opacity-0 md:translate-y-1 group-hover:border-sky-200 group-hover:bg-sky-50 group-hover:text-sky-700 group-hover:md:translate-y-0 group-hover:md:opacity-100;
+  }
+
+  body.dark-mode .app-panel {
+    @apply border-slate-700/70 bg-slate-900/75 shadow-[0_8px_24px_rgba(2,8,23,0.55)];
+  }
+
+  body.dark-mode .app-panel-strong {
+    @apply border-slate-700 bg-slate-900/90 shadow-[0_14px_36px_rgba(2,8,23,0.62)];
+  }
+
+  body.dark-mode .app-section-title {
+    @apply text-slate-100;
+  }
+
+  body.dark-mode .app-input {
+    @apply border-slate-600/90 bg-slate-900/80 text-slate-100 focus:border-sky-400 focus:ring-sky-500/30;
+  }
+
+  body.dark-mode .app-chip {
+    @apply border-slate-700 bg-slate-900/80 text-slate-200;
+  }
+
+  body.dark-mode .app-tab-inactive {
+    @apply bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-slate-100;
+  }
+
+  body.dark-mode .app-btn-neutral {
+    @apply border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700;
+  }
+
+  body.dark-mode .app-btn-danger {
+    @apply border-rose-400/40 bg-rose-900/30 text-rose-200 hover:bg-rose-900/50;
+  }
+
+  body.dark-mode .app-sort-handle {
+    @apply border-slate-600 bg-slate-800 text-slate-300 group-hover:border-sky-500/70 group-hover:bg-slate-700 group-hover:text-sky-200;
+  }
+
+  body.dark-mode .app-reorder-hint {
+    @apply border-slate-600 bg-slate-800 text-slate-300 group-hover:border-sky-500/70 group-hover:bg-slate-700 group-hover:text-sky-200;
+  }
+
+  body.dark-mode .text-slate-900,
+  body.dark-mode .text-gray-900,
+  body.dark-mode .text-gray-800 {
+    color: #e2e8f0 !important;
+  }
+
+  body.dark-mode .text-slate-700,
+  body.dark-mode .text-gray-700,
+  body.dark-mode .text-slate-600,
+  body.dark-mode .text-gray-600,
+  body.dark-mode .text-slate-500,
+  body.dark-mode .text-gray-500 {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .text-slate-400,
+  body.dark-mode .text-gray-400 {
+    color: #64748b !important;
+  }
+
+  body.dark-mode .bg-white,
+  body.dark-mode .bg-white\/90,
+  body.dark-mode .bg-white\/92,
+  body.dark-mode .bg-slate-50,
+  body.dark-mode .bg-slate-50\/60,
+  body.dark-mode .bg-gray-50,
+  body.dark-mode .bg-gray-50\/40 {
+    background-color: rgba(15, 23, 42, 0.72) !important;
+  }
+
+  body.dark-mode .border-gray-100,
+  body.dark-mode .border-gray-200,
+  body.dark-mode .border-slate-200,
+  body.dark-mode .border-slate-300,
+  body.dark-mode .border-sky-100 {
+    border-color: #334155 !important;
+  }
+
+  body.dark-mode .bg-gray-100 {
+    background-color: #1e293b !important;
+  }
+
+  body.dark-mode .bg-gray-200 {
+    background-color: #334155 !important;
+  }
+
+  body.dark-mode .text-gray-700 {
+    color: #cbd5e1 !important;
+  }
+
+  body.dark-mode .bg-red-100 {
+    background-color: rgba(190, 24, 93, 0.24) !important;
+  }
+
+  body.dark-mode .text-red-700 {
+    color: #fda4af !important;
+  }
+}
