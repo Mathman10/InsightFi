@@ -3973,8 +3973,10 @@ export default function App() {
   async function handleRefreshPlaidStatus() {
     try {
       const response = await fetch("/api/plaid/status");
-      const data = (await response.json()) as PlaidStatus;
-      if (!response.ok) throw new Error("status error");
+      const text = await response.text();
+      const parsed = text ? (JSON.parse(text) as PlaidStatus & { error?: string }) : ({} as PlaidStatus & { error?: string });
+      const data = parsed as PlaidStatus;
+      if (!response.ok) throw new Error(parsed.error ?? "status error");
       setPlaidStatus(data);
       return data;
     } catch {
@@ -3986,10 +3988,12 @@ export default function App() {
   async function handleRefreshPlaidTransactions() {
     try {
       const response = await fetch("/api/plaid/transactions");
-      const data = (await response.json()) as {
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : {}) as {
         transactions?: PlaidSyncedTransactionPreview[];
+        error?: string;
       };
-      if (!response.ok) throw new Error("transactions error");
+      if (!response.ok) throw new Error(data.error ?? "transactions error");
       const synced = data.transactions ?? [];
       setPlaidSyncedTransactions(synced);
       importPlaidTransactionsIntoBudgetRows(synced);
@@ -4028,7 +4032,8 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ client_user_id: "budget-app-local-user" }),
       });
-      const linkTokenData = (await linkTokenResponse.json()) as {
+      const linkTokenText = await linkTokenResponse.text();
+      const linkTokenData = (linkTokenText ? JSON.parse(linkTokenText) : {}) as {
         link_token?: string;
         error?: string;
       };
@@ -4048,7 +4053,8 @@ export default function App() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ public_token: publicToken }),
             });
-            const exchangeData = (await exchangeResponse.json()) as {
+            const exchangeText = await exchangeResponse.text();
+            const exchangeData = (exchangeText ? JSON.parse(exchangeText) : {}) as {
               item_id?: string;
               error?: string;
             };
@@ -4086,7 +4092,8 @@ export default function App() {
       const response = await fetch("/api/plaid/transactions/sync", {
         method: "POST",
       });
-      const data = (await response.json()) as {
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : {}) as {
         count?: number;
         added?: number;
         modified?: number;
@@ -4120,7 +4127,8 @@ export default function App() {
     setPlaidMessage(null);
     try {
       const response = await fetch("/api/plaid/transactions/reset", { method: "POST" });
-      const data = (await response.json()) as { error?: string };
+      const text = await response.text();
+      const data = (text ? JSON.parse(text) : {}) as { error?: string };
       if (!response.ok) {
         throw new Error(data.error ?? "Failed to reset synced transactions.");
       }
@@ -4178,7 +4186,8 @@ export default function App() {
     async function fetchStatus() {
       try {
         const response = await fetch("/api/plaid/status");
-        const data = (await response.json()) as PlaidStatus;
+        const text = await response.text();
+        const data = (text ? JSON.parse(text) : {}) as PlaidStatus;
         if (!response.ok) return null;
         if (!cancelled) setPlaidStatus(data);
         return data;
@@ -4191,7 +4200,8 @@ export default function App() {
     async function fetchSyncedPreview() {
       try {
         const response = await fetch("/api/plaid/transactions");
-        const data = (await response.json()) as { transactions?: PlaidSyncedTransactionPreview[] };
+        const text = await response.text();
+        const data = (text ? JSON.parse(text) : {}) as { transactions?: PlaidSyncedTransactionPreview[] };
         if (!response.ok) return;
         if (!cancelled) setPlaidSyncedTransactions(data.transactions ?? []);
       } catch {
@@ -4202,7 +4212,8 @@ export default function App() {
     async function syncSilently() {
       try {
         const response = await fetch("/api/plaid/transactions/sync", { method: "POST" });
-        const data = (await response.json()) as {
+        const text = await response.text();
+        const data = (text ? JSON.parse(text) : {}) as {
           transactions?: PlaidSyncedTransactionPreview[];
         };
         if (!response.ok) return;
