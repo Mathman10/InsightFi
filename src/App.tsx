@@ -9,6 +9,7 @@ declare global {
         token: string;
         onSuccess: (publicToken: string, metadata: { institution?: { institution_id?: string } }) => void;
         onExit?: (error: { error_code?: string; error_message?: string } | null) => void;
+        onEvent?: (eventName: string, metadata: Record<string, unknown>) => void;
       }) => { open: () => void; destroy?: () => void };
     };
   }
@@ -4075,6 +4076,7 @@ export default function App() {
       const handler = plaid.create({
         token: linkTokenData.link_token,
         onSuccess: async (publicToken) => {
+          setPlaidMessage("Plaid Link success received. Exchanging token...");
           try {
             const exchangeResponse = await plaidFetch("/api/plaid/item/public_token/exchange", {
               method: "POST",
@@ -4100,9 +4102,25 @@ export default function App() {
         },
         onExit: (error) => {
           if (error?.error_message) {
-            setPlaidMessage(`Plaid exited: ${error.error_message}`);
+            setPlaidMessage(
+              `Plaid exited before success. code=${error.error_code ?? "unknown"} message=${error.error_message}`,
+            );
+          } else {
+            setPlaidMessage("Plaid exited before success (no error payload).");
           }
           setPlaidBusy(false);
+        },
+        // This gives us a live breadcrumb trail for diagnosing where Link stops.
+        onEvent: (eventName, metadata) => {
+          const status = typeof metadata?.status === "string" ? metadata.status : "unknown";
+          const institutionName =
+            typeof metadata?.institution_name === "string" ? metadata.institution_name : "unknown";
+          const viewName = typeof metadata?.view_name === "string" ? metadata.view_name : "unknown";
+          if (eventName === "ERROR" || eventName === "HANDOFF") {
+            setPlaidMessage(
+              `Plaid event: ${eventName} | status=${status} | view=${viewName} | institution=${institutionName}`,
+            );
+          }
         },
       });
       handler.open();
