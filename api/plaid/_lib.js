@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 const plaidEnv = (process.env.PLAID_ENV ?? "sandbox").trim();
 const plaidClientId = (process.env.PLAID_CLIENT_ID ?? "").trim();
 const plaidSecret = (process.env.PLAID_SECRET ?? "").trim();
@@ -5,6 +7,8 @@ const plaidDaysRequestedRaw = Number(process.env.PLAID_DAYS_REQUESTED ?? "365");
 const plaidDaysRequested = Number.isFinite(plaidDaysRequestedRaw)
   ? Math.min(Math.max(Math.floor(plaidDaysRequestedRaw), 30), 730)
   : 365;
+const supabaseUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "").trim();
+const supabaseServiceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim();
 
 const plaidBaseUrl =
   plaidEnv === "production"
@@ -39,15 +43,47 @@ export function json(res, statusCode, payload) {
   res.send(JSON.stringify(payload));
 }
 
-export function getStore() {
+export function supabaseConfigured() {
+  return supabaseUrl.length > 0 && supabaseServiceRoleKey.length > 0;
+}
+
+export function getSupabaseAdmin() {
+  if (!supabaseConfigured()) return null;
   const g = globalThis;
-  if (!g.__plaidStore) {
-    g.__plaidStore = {
-      items: [],
-      transactionsById: new Map(),
-    };
+  if (!g.__supabaseAdminPlaid) {
+    g.__supabaseAdminPlaid = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   }
-  return g.__plaidStore;
+  return g.__supabaseAdminPlaid;
+}
+
+export async function getAuthenticatedUser(req, res) {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    json(res, 500, {
+      error: "Supabase admin is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+    });
+    return null;
+  }
+
+  const authHeader = req.headers.authorization ?? req.headers.Authorization;
+  const token =
+    typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+  if (!token) {
+    json(res, 401, { error: "Missing bearer token." });
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.id) {
+    json(res, 401, { error: "Invalid auth token." });
+    return null;
+  }
+
+  return data.user;
 }
 
 export async function readJsonBody(req) {

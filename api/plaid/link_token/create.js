@@ -1,4 +1,11 @@
-import { callPlaid, getPlaidDaysRequested, json, plaidConfigured, readJsonBody } from "../_lib.js";
+import {
+  callPlaid,
+  getAuthenticatedUser,
+  getPlaidDaysRequested,
+  json,
+  plaidConfigured,
+  readJsonBody,
+} from "../_lib.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,11 +20,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) return;
     const body = await readJsonBody(req);
     const clientUserId =
       typeof body.client_user_id === "string" && body.client_user_id.trim().length > 0
         ? body.client_user_id.trim()
-        : `vercel-user-${Date.now()}`;
+        : user.id;
     const requestedDaysRaw =
       typeof body.days_requested === "number"
         ? body.days_requested

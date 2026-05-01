@@ -1,4 +1,4 @@
-import { getStore, json } from "../_lib.js";
+import { getAuthenticatedUser, getSupabaseAdmin, json } from "../_lib.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,13 +6,21 @@ export default async function handler(req, res) {
     return;
   }
 
-  const store = getStore();
-  store.transactionsById.clear();
-  store.items = store.items.map((item) => ({ ...item, cursor: undefined }));
+  const user = await getAuthenticatedUser(req, res);
+  if (!user) return;
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
 
-  json(res, 200, {
-    itemCount: store.items.length,
-    count: store.transactionsById.size,
-  });
+  const [{ error: txDeleteError }, { error: cursorResetError }, { count: itemCount }] = await Promise.all([
+    supabase.from("plaid_transactions").delete().eq("user_id", user.id),
+    supabase.from("plaid_items").update({ cursor: null }).eq("user_id", user.id),
+    supabase.from("plaid_items").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+  ]);
+
+  if (txDeleteError || cursorResetError) {
+    json(res, 500, { error: txDeleteError?.message ?? cursorResetError?.message ?? "Reset failed" });
+    return;
+  }
+
+  json(res, 200, { itemCount: itemCount ?? 0, count: 0 });
 }
-
