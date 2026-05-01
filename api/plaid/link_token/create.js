@@ -1,4 +1,4 @@
-import { callPlaid, json, plaidConfigured, readJsonBody } from "../_lib.js";
+import { callPlaid, getPlaidDaysRequested, json, plaidConfigured, readJsonBody } from "../_lib.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -18,6 +18,13 @@ export default async function handler(req, res) {
       typeof body.client_user_id === "string" && body.client_user_id.trim().length > 0
         ? body.client_user_id.trim()
         : `vercel-user-${Date.now()}`;
+    const requestedDaysRaw =
+      typeof body.days_requested === "number"
+        ? body.days_requested
+        : Number(body.days_requested ?? getPlaidDaysRequested());
+    const requestedDays = Number.isFinite(requestedDaysRaw)
+      ? Math.min(Math.max(Math.floor(requestedDaysRaw), 30), 730)
+      : getPlaidDaysRequested();
 
     const { response, data } = await callPlaid("/link/token/create", {
       client_name: "Insight Financial",
@@ -25,6 +32,7 @@ export default async function handler(req, res) {
       language: "en",
       user: { client_user_id: clientUserId },
       products: ["transactions"],
+      transactions: { days_requested: requestedDays },
     });
 
     if (!response.ok || !data.link_token) {
@@ -46,4 +54,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

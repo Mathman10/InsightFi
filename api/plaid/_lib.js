@@ -1,6 +1,10 @@
 const plaidEnv = (process.env.PLAID_ENV ?? "sandbox").trim();
 const plaidClientId = (process.env.PLAID_CLIENT_ID ?? "").trim();
 const plaidSecret = (process.env.PLAID_SECRET ?? "").trim();
+const plaidDaysRequestedRaw = Number(process.env.PLAID_DAYS_REQUESTED ?? "365");
+const plaidDaysRequested = Number.isFinite(plaidDaysRequestedRaw)
+  ? Math.min(Math.max(Math.floor(plaidDaysRequestedRaw), 30), 730)
+  : 365;
 
 const plaidBaseUrl =
   plaidEnv === "production"
@@ -25,6 +29,9 @@ export function plaidConfigured() {
 
 export function getPlaidEnv() {
   return plaidEnv;
+}
+export function getPlaidDaysRequested() {
+  return plaidDaysRequested;
 }
 
 export function json(res, statusCode, payload) {
@@ -75,4 +82,3 @@ export async function callPlaid(path, body) {
 
   return { response, data };
 }
-

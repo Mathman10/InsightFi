@@ -199,6 +199,10 @@ export default defineConfig(({ mode }) => {
         const plaidEnv = (env.PLAID_ENV ?? 'sandbox').trim()
         const plaidClientId = (env.PLAID_CLIENT_ID ?? '').trim()
         const plaidSecret = (env.PLAID_SECRET ?? '').trim()
+        const plaidDaysRequestedRaw = Number(env.PLAID_DAYS_REQUESTED ?? '365')
+        const plaidDaysRequested = Number.isFinite(plaidDaysRequestedRaw)
+          ? Math.min(Math.max(Math.floor(plaidDaysRequestedRaw), 30), 730)
+          : 365
         const plaidBaseUrl =
           plaidEnv === 'production'
             ? 'https://production.plaid.com'
@@ -212,6 +216,7 @@ export default defineConfig(({ mode }) => {
           sendJson(res, 200, {
             configured: plaidConfigured,
             env: plaidEnv,
+            daysRequested: plaidDaysRequested,
             itemCount: plaidItems.length,
             syncedTransactionCount: plaidTransactionsById.size,
             persistencePath: plaidDevStorePath,
@@ -270,6 +275,13 @@ export default defineConfig(({ mode }) => {
                 typeof body.client_user_id === 'string' && body.client_user_id.trim().length > 0
                   ? body.client_user_id.trim()
                   : `local-user-${Date.now()}`
+              const requestedDaysRaw =
+                typeof body.days_requested === 'number'
+                  ? body.days_requested
+                  : Number(body.days_requested ?? plaidDaysRequested)
+              const requestedDays = Number.isFinite(requestedDaysRaw)
+                ? Math.min(Math.max(Math.floor(requestedDaysRaw), 30), 730)
+                : plaidDaysRequested
               const requestPayload = {
                 client_id: plaidClientId,
                 secret: plaidSecret,
@@ -280,6 +292,7 @@ export default defineConfig(({ mode }) => {
                   client_user_id: clientUserId,
                 },
                 products: ['transactions'],
+                transactions: { days_requested: requestedDays },
               }
               const response = await fetch(`${plaidBaseUrl}/link/token/create`, {
                 method: 'POST',

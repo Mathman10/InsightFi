@@ -127,6 +127,7 @@ type PaydownVsInvestForm = {
 type PlaidStatus = {
   configured: boolean;
   env: string;
+  daysRequested?: number;
   itemCount: number;
   syncedTransactionCount?: number;
   needsEnv: boolean;
@@ -169,6 +170,13 @@ const RETURN_LOOKBACK_MONTHS: Record<ReturnLookbackWindow, number> = {
   "3Y": 36,
   "5Y": 60,
 };
+const PLAID_HISTORY_OPTIONS = [
+  { label: "30D", days: 30 },
+  { label: "90D", days: 90 },
+  { label: "180D", days: 180 },
+  { label: "1Y", days: 365 },
+  { label: "2Y", days: 730 },
+];
 const PLANNER_TEMPLATES: { id: PlannerTemplateId; label: string }[] = [
   { id: "retirement_roth_401k", label: "Retirement (Roth 401k)" },
   { id: "retirement_traditional_401k", label: "Retirement (Traditional 401k)" },
@@ -1733,6 +1741,12 @@ export default function App() {
   const [plaidMessage, setPlaidMessage] = useState<string | null>(null);
   const [plaidSyncBusy, setPlaidSyncBusy] = useState(false);
   const [plaidSyncedTransactions, setPlaidSyncedTransactions] = useState<PlaidSyncedTransactionPreview[]>([]);
+  const [plaidHistoryDaysRequested, setPlaidHistoryDaysRequested] = useState<number>(() => {
+    const saved = localStorage.getItem("budget-plaid-days-requested");
+    const parsed = Number(saved ?? "365");
+    if (!Number.isFinite(parsed)) return 365;
+    return Math.min(Math.max(Math.floor(parsed), 30), 730);
+  });
   const [plaidAutoFilterEnabled, setPlaidAutoFilterEnabled] = useState<boolean>(() => {
     const saved = localStorage.getItem("budget-plaid-auto-filter");
     if (!saved) return true;
@@ -1920,6 +1934,9 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("budget-plaid-auto-filter", plaidAutoFilterEnabled ? "true" : "false");
   }, [plaidAutoFilterEnabled]);
+  useEffect(() => {
+    localStorage.setItem("budget-plaid-days-requested", String(plaidHistoryDaysRequested));
+  }, [plaidHistoryDaysRequested]);
 
   useEffect(() => {
     localStorage.setItem("budget-dark-mode", isDarkMode ? "true" : "false");
@@ -4030,7 +4047,10 @@ export default function App() {
       const linkTokenResponse = await fetch("/api/plaid/link_token/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_user_id: "budget-app-local-user" }),
+        body: JSON.stringify({
+          client_user_id: "budget-app-local-user",
+          days_requested: plaidHistoryDaysRequested,
+        }),
       });
       const linkTokenText = await linkTokenResponse.text();
       const linkTokenData = (linkTokenText ? JSON.parse(linkTokenText) : {}) as {
@@ -5529,10 +5549,39 @@ export default function App() {
                   </button>
                 </div>
               </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-4">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <p className="text-sm text-slate-600">History window for new links:</p>
+                <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+                  {PLAID_HISTORY_OPTIONS.map((option) => (
+                    <button
+                      key={`plaid-days-${option.days}`}
+                      className={`rounded-lg px-2 py-1 text-xs font-medium transition ${
+                        plaidHistoryDaysRequested === option.days
+                          ? "bg-sky-600 text-white"
+                          : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                      onClick={() => setPlaidHistoryDaysRequested(option.days)}
+                      disabled={plaidBusy || plaidSyncBusy}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Applies on next Connect Bank. Re-link if you change this.
+                </p>
+              </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-5">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs text-slate-500">Plaid Environment</p>
                   <p className="mt-1 font-semibold text-slate-900">{plaidStatus?.env ?? "unknown"}</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">History Requested</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {plaidHistoryDaysRequested} days
+                    {plaidStatus?.daysRequested ? ` (server default ${plaidStatus.daysRequested})` : ""}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs text-slate-500">Configuration</p>
