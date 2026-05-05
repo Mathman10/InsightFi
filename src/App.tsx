@@ -10,6 +10,7 @@ declare global {
         onSuccess: (publicToken: string, metadata: { institution?: { institution_id?: string } }) => void;
         onExit?: (error: { error_code?: string; error_message?: string } | null) => void;
         onEvent?: (eventName: string, metadata: Record<string, unknown>) => void;
+        receivedRedirectUri?: string;
       }) => { open: () => void; destroy?: () => void };
     };
   }
@@ -144,6 +145,26 @@ type PlaidSyncedTransactionPreview = {
   name: string;
   merchantName?: string;
   pending: boolean;
+};
+
+type UserAppStateSnapshot = {
+  selectedMonthKey?: string;
+  categories?: Category[];
+  projectedIncomeByMonth?: Record<string, number>;
+  transactions?: Transaction[];
+  goals?: SavingsGoal[];
+  contributions?: SavingsContribution[];
+  insightAccounts?: InsightAccount[];
+  mortgageForm?: MortgageForm;
+  rentVsBuyForm?: RentVsBuyForm;
+  paydownVsInvestForm?: PaydownVsInvestForm;
+  plannerConfigs?: Record<number, PlannerConfig>;
+  plannerMarketWindowByGoal?: Record<number, MarketWindow>;
+  plannerReturnLookbackByGoal?: Record<number, ReturnLookbackWindow>;
+  plannerAllocationPanelOpenByGoal?: Record<number, boolean>;
+  plaidAutoFilterEnabled?: boolean;
+  plaidHistoryDaysRequested?: number;
+  isDarkMode?: boolean;
 };
 
 const MARKET_WINDOWS: MarketWindow[] = ["1D", "1W", "1M", "3M", "6M", "1Y"];
@@ -1506,6 +1527,7 @@ export default function App() {
   const [authPassword, setAuthPassword] = useState("");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const [cloudStateReady, setCloudStateReady] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("budget-dark-mode");
     if (!saved) return false;
@@ -1959,6 +1981,128 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("budget-planner-allocation-panel-open", JSON.stringify(plannerAllocationPanelOpenByGoal));
   }, [plannerAllocationPanelOpenByGoal]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser) {
+      setCloudStateReady(false);
+      return;
+    }
+    const userId = authUser.id;
+
+    let cancelled = false;
+
+    async function loadCloudState() {
+      const { data } = await supabase
+        .from("user_app_state")
+        .select("state")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+
+      const snapshot = (data?.state ?? null) as UserAppStateSnapshot | null;
+      if (snapshot && typeof snapshot === "object") {
+        if (typeof snapshot.selectedMonthKey === "string" && snapshot.selectedMonthKey.length > 0) {
+          setSelectedMonthKey(snapshot.selectedMonthKey);
+        }
+        if (Array.isArray(snapshot.categories)) setCategories(snapshot.categories.map(normalizeCategory));
+        if (snapshot.projectedIncomeByMonth && typeof snapshot.projectedIncomeByMonth === "object") {
+          setProjectedIncomeByMonth(snapshot.projectedIncomeByMonth);
+        }
+        if (Array.isArray(snapshot.transactions)) setTransactions(snapshot.transactions);
+        if (Array.isArray(snapshot.goals)) setGoals(snapshot.goals);
+        if (Array.isArray(snapshot.contributions)) setContributions(snapshot.contributions);
+        if (Array.isArray(snapshot.insightAccounts)) setInsightAccounts(snapshot.insightAccounts);
+        if (snapshot.mortgageForm && typeof snapshot.mortgageForm === "object") setMortgageForm(snapshot.mortgageForm);
+        if (snapshot.rentVsBuyForm && typeof snapshot.rentVsBuyForm === "object") setRentVsBuyForm(snapshot.rentVsBuyForm);
+        if (snapshot.paydownVsInvestForm && typeof snapshot.paydownVsInvestForm === "object") {
+          setPaydownVsInvestForm(snapshot.paydownVsInvestForm);
+        }
+        if (snapshot.plannerConfigs && typeof snapshot.plannerConfigs === "object") setPlannerConfigs(snapshot.plannerConfigs);
+        if (snapshot.plannerMarketWindowByGoal && typeof snapshot.plannerMarketWindowByGoal === "object") {
+          setPlannerMarketWindowByGoal(snapshot.plannerMarketWindowByGoal);
+        }
+        if (snapshot.plannerReturnLookbackByGoal && typeof snapshot.plannerReturnLookbackByGoal === "object") {
+          setPlannerReturnLookbackByGoal(snapshot.plannerReturnLookbackByGoal);
+        }
+        if (snapshot.plannerAllocationPanelOpenByGoal && typeof snapshot.plannerAllocationPanelOpenByGoal === "object") {
+          setPlannerAllocationPanelOpenByGoal(snapshot.plannerAllocationPanelOpenByGoal);
+        }
+        if (typeof snapshot.plaidAutoFilterEnabled === "boolean") {
+          setPlaidAutoFilterEnabled(snapshot.plaidAutoFilterEnabled);
+        }
+        if (typeof snapshot.plaidHistoryDaysRequested === "number" && Number.isFinite(snapshot.plaidHistoryDaysRequested)) {
+          setPlaidHistoryDaysRequested(Math.min(Math.max(Math.floor(snapshot.plaidHistoryDaysRequested), 30), 730));
+        }
+        if (typeof snapshot.isDarkMode === "boolean") setIsDarkMode(snapshot.isDarkMode);
+      }
+
+      setCloudStateReady(true);
+    }
+
+    void loadCloudState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser || !cloudStateReady) return;
+    const userId = authUser.id;
+
+    const timeoutId = window.setTimeout(async () => {
+      const snapshot: UserAppStateSnapshot = {
+        selectedMonthKey,
+        categories,
+        projectedIncomeByMonth,
+        transactions,
+        goals,
+        contributions,
+        insightAccounts,
+        mortgageForm,
+        rentVsBuyForm,
+        paydownVsInvestForm,
+        plannerConfigs,
+        plannerMarketWindowByGoal,
+        plannerReturnLookbackByGoal,
+        plannerAllocationPanelOpenByGoal,
+        plaidAutoFilterEnabled,
+        plaidHistoryDaysRequested,
+        isDarkMode,
+      };
+
+      await supabase.from("user_app_state").upsert(
+        {
+          user_id: userId,
+          state: snapshot,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
+    }, 700);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    authUser,
+    cloudStateReady,
+    selectedMonthKey,
+    categories,
+    projectedIncomeByMonth,
+    transactions,
+    goals,
+    contributions,
+    insightAccounts,
+    mortgageForm,
+    rentVsBuyForm,
+    paydownVsInvestForm,
+    plannerConfigs,
+    plannerMarketWindowByGoal,
+    plannerReturnLookbackByGoal,
+    plannerAllocationPanelOpenByGoal,
+    plaidAutoFilterEnabled,
+    plaidHistoryDaysRequested,
+    isDarkMode,
+  ]);
 
   useEffect(() => {
     const today = new Date();
@@ -4072,9 +4216,12 @@ export default function App() {
       await ensurePlaidScriptLoaded();
       const plaid = window.Plaid;
       if (!plaid?.create) throw new Error("Plaid Link SDK did not initialize");
+      const currentUrl = window.location.href;
+      const hasOauthStateId = new URL(currentUrl).searchParams.has("oauth_state_id");
 
       const handler = plaid.create({
         token: linkTokenData.link_token,
+        receivedRedirectUri: hasOauthStateId ? currentUrl : undefined,
         onSuccess: async (publicToken) => {
           setPlaidMessage("Plaid Link success received. Exchanging token...");
           try {
@@ -4094,6 +4241,11 @@ export default function App() {
             setPlaidMessage(`Bank linked successfully (${exchangeData.item_id ?? "item connected"}).`);
             await handleRefreshPlaidStatus();
             await handleRefreshPlaidTransactions();
+            if (hasOauthStateId) {
+              const cleanUrl = new URL(window.location.href);
+              cleanUrl.searchParams.delete("oauth_state_id");
+              window.history.replaceState({}, "", cleanUrl.toString());
+            }
           } catch (error) {
             setPlaidMessage(error instanceof Error ? error.message : "Failed to finish bank linking.");
           } finally {
@@ -4107,6 +4259,11 @@ export default function App() {
             );
           } else {
             setPlaidMessage("Plaid exited before success (no error payload).");
+          }
+          if (hasOauthStateId) {
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete("oauth_state_id");
+            window.history.replaceState({}, "", cleanUrl.toString());
           }
           setPlaidBusy(false);
         },
@@ -4346,6 +4503,7 @@ export default function App() {
   async function handleSignOut() {
     if (!isSupabaseConfigured) return;
     await supabase.auth.signOut();
+    setCloudStateReady(false);
     setAuthMessage("Signed out.");
   }
 

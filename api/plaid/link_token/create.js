@@ -2,6 +2,7 @@ import {
   callPlaid,
   getAuthenticatedUser,
   getPlaidDaysRequested,
+  getPlaidRedirectUri,
   json,
   plaidConfigured,
   readJsonBody,
@@ -42,6 +43,7 @@ export default async function handler(req, res) {
       user: { client_user_id: clientUserId },
       products: ["transactions"],
       transactions: { days_requested: requestedDays },
+      ...(getPlaidRedirectUri() ? { redirect_uri: getPlaidRedirectUri() } : {}),
     });
 
     if (!response.ok || !data.link_token) {
