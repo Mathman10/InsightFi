@@ -4,6 +4,7 @@
   body {
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
     background:
       radial-gradient(circle at 8% 6%, rgba(56, 189, 248, 0.22), transparent 30%),
       radial-gradient(circle at 88% 12%, rgba(99, 102, 241, 0.14), transparent 30%),
@@ -46,7 +47,7 @@
   }
 
   .app-input {
-    @apply rounded-2xl border border-slate-200/90 bg-white px-3 py-2 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70;
+    @apply w-full rounded-2xl border border-slate-200/90 bg-white px-3 py-2 text-base outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70 md:text-sm;
   }
 
   .app-chip {
@@ -54,7 +55,7 @@
   }
 
   .app-tab {
-    @apply rounded-2xl px-4 py-2 text-sm font-semibold transition;
+    @apply rounded-2xl px-3 py-2 text-xs font-semibold transition sm:px-4 sm:text-sm;
   }
 
   .app-tab-active {
@@ -66,15 +67,15 @@
   }
 
   .app-btn-primary {
-    @apply rounded-2xl bg-gradient-to-r from-sky-800 via-cyan-700 to-blue-800 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,132,199,0.24)] transition hover:from-sky-900 hover:via-cyan-800 hover:to-blue-900;
+    @apply min-h-11 rounded-2xl bg-gradient-to-r from-sky-800 via-cyan-700 to-blue-800 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,132,199,0.24)] transition hover:from-sky-900 hover:via-cyan-800 hover:to-blue-900;
   }
 
   .app-btn-neutral {
-    @apply rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50;
+    @apply min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50;
   }
 
   .app-btn-danger {
-    @apply rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100;
+    @apply min-h-11 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100;
   }
 
   .app-sort-card {
@@ -197,5 +198,76 @@
 
   body.dark-mode .text-red-700 {
     color: #fda4af !important;
+  }
+
+  @media (max-width: 767px) {
+    .app-panel,
+    .app-panel-strong {
+      @apply rounded-2xl;
+    }
+
+    .app-section-title {
+      @apply text-lg;
+    }
+
+    .mobile-page {
+      padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(18px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+    }
+
+    .mobile-tab-bar {
+      @apply grid w-full grid-cols-3;
+    }
+
+    .mobile-tab-bar .app-tab {
+      @apply min-h-11 px-2;
+    }
+
+    .mobile-actions {
+      @apply grid w-full grid-cols-1 gap-2;
+    }
+
+    .mobile-actions > button {
+      @apply w-full;
+    }
+
+    .mobile-transactions-header {
+      @apply hidden;
+    }
+
+    .mobile-transaction-row {
+      @apply block px-4 py-4;
+    }
+
+    .mobile-transaction-row > * + * {
+      @apply mt-3;
+    }
+
+    .mobile-transaction-row > p,
+    .mobile-transaction-row > div:not(:first-child) {
+      @apply flex items-center justify-between gap-3 text-sm;
+    }
+
+    .mobile-transaction-row > p::before,
+    .mobile-transaction-row > div:not(:first-child)::before {
+      content: attr(data-label);
+      @apply text-xs font-semibold uppercase text-slate-400;
+    }
+
+    .mobile-transaction-row input,
+    .mobile-transaction-row select {
+      @apply min-h-11 text-base;
+    }
+
+    .mobile-segmented {
+      @apply grid w-full grid-cols-2;
+    }
+
+    .mobile-segmented > button {
+      @apply min-h-11 px-2;
+    }
   }
 }

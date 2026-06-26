@@ -824,11 +824,11 @@ function GrowthComparisonChart({
 
       {isExpanded ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-4"
           onClick={() => setIsExpanded(false)}
         >
           <div
-            className="w-full max-w-6xl rounded-xl bg-white p-4 shadow-2xl"
+            className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-xl bg-white p-3 shadow-2xl sm:p-4"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
@@ -840,7 +840,7 @@ function GrowthComparisonChart({
                 Close
               </button>
             </div>
-            {renderPlot(1200, 500, "h-[70vh] min-h-[420px] w-full")}
+            {renderPlot(1200, 500, "h-[60vh] min-h-[300px] w-full sm:h-[70vh] sm:min-h-[420px]")}
           </div>
         </div>
       ) : null}
@@ -4571,7 +4571,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div className="mobile-page min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="app-panel-strong p-3 md:p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -4584,11 +4584,11 @@ export default function App() {
               <img
                 src="/insight-wordmark.png"
                 alt="Insight Financial"
-                className="h-12 w-auto max-w-[360px] rounded-lg object-contain md:h-14 md:max-w-[420px]"
+                className="h-10 w-auto max-w-[230px] rounded-lg object-contain sm:max-w-[320px] md:h-14 md:max-w-[420px]"
               />
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
-              <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1">
+            <div className="flex w-full flex-wrap items-center justify-center gap-2 md:w-auto md:justify-end">
+              <div className="mobile-tab-bar inline-flex rounded-2xl border border-slate-200 bg-white p-1 md:w-auto">
                 <button
                   className={`app-tab ${
                     activeView === "budget" ? "app-tab-active" : "app-tab-inactive"
@@ -4615,12 +4615,12 @@ export default function App() {
                 </button>
               </div>
               <button
-                className="app-btn-neutral px-3 py-2 text-xs md:text-sm"
+                className="app-btn-neutral flex-1 px-3 py-2 text-xs md:flex-none md:text-sm"
                 onClick={() => setIsDarkMode((current) => !current)}
               >
                 {isDarkMode ? "Light Mode" : "Dark Mode"}
               </button>
-              <button className="app-btn-neutral px-3 py-2 text-xs md:text-sm" onClick={() => void handleSignOut()}>
+              <button className="app-btn-neutral flex-1 px-3 py-2 text-xs md:flex-none md:text-sm" onClick={() => void handleSignOut()}>
                 Sign Out
               </button>
             </div>
@@ -4630,28 +4630,28 @@ export default function App() {
         <div className={activeView === "budget" ? "space-y-6" : "hidden"}>
         <div className="app-panel p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:justify-start">
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-600 shadow-sm transition hover:bg-slate-50"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-600 shadow-sm transition hover:bg-slate-50"
               onClick={() => setSelectedMonthKey((current) => shiftMonth(current, -1))}
             >
               {"<"}
             </button>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">{formatMonthLabel(selectedMonthKey)}</h1>
+            <h1 className="min-w-0 flex-1 text-center text-2xl font-bold tracking-tight text-slate-900 sm:flex-none sm:text-3xl">{formatMonthLabel(selectedMonthKey)}</h1>
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-600 shadow-sm transition hover:bg-slate-50"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-600 shadow-sm transition hover:bg-slate-50"
               onClick={handleAdvanceMonth}
             >
               {">"}
             </button>
             <button
-              className="app-btn-danger"
+              className="app-btn-danger w-full sm:w-auto"
               onClick={handleResetMonth}
             >
               Reset Month
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="mobile-actions flex flex-wrap gap-2 md:w-auto">
             <button
               className="app-btn-neutral"
               onClick={() => {
@@ -5233,16 +5233,16 @@ export default function App() {
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sm text-sky-700">T</span>
               Recent Transactions
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <button
-                className="app-btn-neutral px-3 py-1.5 text-xs"
+                className="app-btn-neutral flex-1 px-3 py-1.5 text-xs sm:flex-none"
                 onClick={() => void handleSyncPlaidTransactions()}
                 disabled={plaidSyncBusy || plaidBusy}
               >
                 {plaidSyncBusy ? "Syncing..." : "Sync Transactions"}
               </button>
               <button
-                className="app-btn-danger px-3 py-1.5 text-xs"
+                className="app-btn-danger flex-1 px-3 py-1.5 text-xs sm:flex-none"
                 onClick={() => void handleRemoveAllSyncedTransactions()}
                 disabled={plaidSyncBusy || plaidBusy}
               >
@@ -5253,8 +5253,8 @@ export default function App() {
           {plaidMessage ? (
             <p className="text-xs text-slate-600">{plaidMessage}</p>
           ) : null}
-          <div className="overflow-hidden app-panel-strong">
-            <div className="grid grid-cols-5 gap-3 border-b border-gray-100 px-5 py-3 text-sm font-semibold text-gray-500">
+          <div className="app-panel-strong overflow-hidden">
+            <div className="mobile-transactions-header grid grid-cols-5 gap-3 border-b border-gray-100 px-5 py-3 text-sm font-semibold text-gray-500">
               <p>Description</p><p>Category</p><p>Type</p><p>Date</p><p className="text-right">Amount</p>
             </div>
             {currentMonthTransactions.map((transaction) => {
@@ -5269,7 +5269,7 @@ export default function App() {
 
               if (isInlineEditing) {
                 return (
-                  <div key={transaction.id} className="grid grid-cols-5 gap-3 border-b border-gray-100 bg-sky-50/40 px-5 py-4 text-sm last:border-b-0">
+                  <div key={transaction.id} className="mobile-transaction-row grid grid-cols-5 gap-3 border-b border-gray-100 bg-sky-50/40 px-5 py-4 text-sm last:border-b-0">
                     <div>
                       <input
                         className="w-full rounded-lg border border-gray-200 px-2 py-1 outline-none focus:border-sky-400"
@@ -5287,7 +5287,7 @@ export default function App() {
                         <button className="rounded-lg bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700" onClick={cancelInlineTransactionEdit}>Cancel</button>
                       </div>
                     </div>
-                    <div>
+                    <div data-label="Category">
                       {inlineTransactionDraft.type === "income" ? (
                         <p className="pt-2 text-gray-500">Income</p>
                       ) : (
@@ -5308,7 +5308,7 @@ export default function App() {
                         </select>
                       )}
                     </div>
-                    <div>
+                    <div data-label="Type">
                       <select
                         className="w-full rounded-lg border border-gray-200 px-2 py-1 outline-none focus:border-sky-400"
                         value={inlineTransactionDraft.type}
@@ -5330,7 +5330,7 @@ export default function App() {
                         <option value="income">income</option>
                       </select>
                     </div>
-                    <div>
+                    <div data-label="Date">
                       <input
                         className="w-full rounded-lg border border-gray-200 px-2 py-1 outline-none focus:border-sky-400"
                         type="date"
@@ -5344,7 +5344,7 @@ export default function App() {
                         }
                       />
                     </div>
-                    <div>
+                    <div data-label="Amount">
                       <input
                         className="w-full rounded-lg border border-gray-200 px-2 py-1 text-right outline-none focus:border-sky-400"
                         type="number"
@@ -5363,7 +5363,7 @@ export default function App() {
               }
 
               return (
-                <div key={transaction.id} className="grid grid-cols-5 gap-3 border-b border-gray-100 px-5 py-4 text-sm last:border-b-0">
+                <div key={transaction.id} className="mobile-transaction-row grid grid-cols-5 gap-3 border-b border-gray-100 px-5 py-4 text-sm last:border-b-0">
                   <div>
                     <p className="font-medium text-gray-800">{transaction.description}</p>
                     <div className="mt-2 flex gap-2">
@@ -5371,10 +5371,10 @@ export default function App() {
                       <button className="rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700" onClick={() => handleDeleteTransaction(transaction.id)}>Delete</button>
                     </div>
                   </div>
-                  <p className="text-gray-500">{transaction.category}</p>
-                  <p><span className={`rounded-full px-2 py-1 text-xs font-medium ${transaction.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{transaction.type}</span></p>
-                  <p className="text-gray-500">{transaction.date}</p>
-                  <p className="text-right font-semibold text-gray-800">{formatCurrency(transaction.amount)}</p>
+                  <p className="text-gray-500" data-label="Category">{transaction.category}</p>
+                  <p data-label="Type"><span className={`rounded-full px-2 py-1 text-xs font-medium ${transaction.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{transaction.type}</span></p>
+                  <p className="text-gray-500" data-label="Date">{transaction.date}</p>
+                  <p className="text-right font-semibold text-gray-800" data-label="Amount">{formatCurrency(transaction.amount)}</p>
                 </div>
               );
             })}
@@ -6197,9 +6197,9 @@ export default function App() {
                   ];
 
                   return (
-                    <div key={goal.id} className="overflow-hidden app-panel-strong">
+                    <div key={goal.id} className="app-panel-strong overflow-hidden">
                       <button
-                        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+                        className="flex w-full flex-col gap-3 px-4 py-4 text-left sm:flex-row sm:items-center sm:justify-between sm:px-5"
                         onClick={() => setPlannerExpandedGoalId((current) => (current === goal.id ? null : goal.id))}
                       >
                         <div className="flex min-w-0 items-center gap-3">
@@ -6223,7 +6223,7 @@ export default function App() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="w-full rounded-xl bg-slate-50 px-3 py-2 text-left sm:w-auto sm:bg-transparent sm:px-0 sm:py-0 sm:text-right">
                           <p className="text-sm text-gray-500">Plan / Month</p>
                           <p className="text-lg font-semibold text-gray-900">{formatCurrency(activeMonthlyContribution)}</p>
                           <p className="text-xs text-gray-400">{summary.monthsToGoal} months</p>
@@ -6249,7 +6249,7 @@ export default function App() {
                             </div>
                             <div>
                               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Asset Type</p>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                 <button
                                   className={`px-3 py-2 text-xs font-medium ${
                                     config.trackingMode === "market"
@@ -6284,7 +6284,7 @@ export default function App() {
                             </div>
                             <div>
                               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Retirement Mode</p>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                 <button
                                   className={`px-3 py-2 text-xs font-medium ${
                                     isRetirementGoal
@@ -6319,7 +6319,7 @@ export default function App() {
                             </div>
                             <div>
                               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Planning Mode</p>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                 <button
                                   className={`px-3 py-2 text-xs font-medium ${
                                     config.planMode === "contribution"
@@ -6425,7 +6425,7 @@ export default function App() {
                               </div>
                               <div>
                                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Retirement Target Method</p>
-                                <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                                <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                   <button
                                     className={`px-3 py-2 text-xs font-medium ${
                                       config.retirementTargetMode === "swr"
@@ -6615,7 +6615,7 @@ export default function App() {
                                   Estimate how much pre-tax balance you need to net your cash goal after capital-gains taxes.
                                 </p>
                               </div>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                 <button
                                   className={`px-3 py-1.5 text-xs font-medium ${
                                     config.costBasisMode === "auto"
@@ -7041,7 +7041,7 @@ export default function App() {
                                     : "Waiting for market data"}
                                 </p>
                               </div>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white">
                                 {MARKET_WINDOWS.map((windowKey) => (
                                   <button
                                     key={`${goal.id}-${windowKey}`}
@@ -7190,7 +7190,7 @@ export default function App() {
                                   <span className="text-xs text-gray-600">{projectionStatus.message}</span>
                                 </div>
                               </div>
-                              <div className="inline-flex overflow-hidden rounded-lg border border-gray-200">
+                              <div className="mobile-segmented inline-flex overflow-hidden rounded-lg border border-gray-200">
                                 {RETURN_LOOKBACK_WINDOWS.map((windowKey) => (
                                   <button
                                     key={`${goal.id}-lookback-${windowKey}`}
@@ -7512,4 +7512,3 @@ export default function App() {
     </div>
   );
 }
-
